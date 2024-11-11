@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<annotation>
+<folder>images</folder>
+<filename>c20344ef-IMG-20241108-WA0015.jpg</filename>
+<source>
+<database>MyDatabase</database>
+<annotation>COCO2017</annotation>
+<image>flickr</image>
+<flickrid>NULL</flickrid>
+<annotator>1</annotator>
+</source>
+<owner>
+<flickrid>NULL</flickrid>
+<name>Label Studio</name>
+</owner>
+<size>
+<width>1599</width>
+<height>1200</height>
+<depth>3</depth>
+</size>
+<segmented>0</segmented>
+<object>
+<name>Plate</name>
+<pose>Unspecified</pose>
+<truncated>0</truncated>
+<difficult>0</difficult>
+<bndbox>
+<xmin>539</xmin>
+<ymin>573</ymin>
+<xmax>841</xmax>
+<ymax>643</ymax>
+</bndbox>
+</object>
+</annotation>

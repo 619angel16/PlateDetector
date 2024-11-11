@@ -178,6 +178,7 @@ if __name__ == "__main__":
         cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
         plate_region = gray[y:y + h, x:x + w]
 
+
     # Display the result
     cv2.imshow('Object Detection', img)
     cv2.waitKey(0)
