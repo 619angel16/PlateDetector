@@ -4,9 +4,7 @@ import cv2 as cv2
 import pathlib
 import os
 import xml.etree.ElementTree as ET
-
-import numpy as np
-
+import pytesseract
 
 def read_voc_xml(xmlfile: str) -> dict:
     """read the Pascal VOC XML and return (filename, object name, bounding box)
@@ -30,93 +28,98 @@ def read_voc_xml(xmlfile: str) -> dict:
 
     return boxes
 
+def verification():
+    # Ruta archivo de anotaciones
+    annotations_file = "formatXMLPlate/positive.dat"
+
+    # Verifica cada línea en el archivo de anotaciones
+    with open(annotations_file, "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            parts = line.strip().split()
+            image_path = parts[0]  # Ruta de la imagen
+            image_path = "formatXMLPlate/"+image_path
+            if not os.path.exists(image_path):
+                print(f"Imagen no encontrada: {image_path}")
+                continue
+
+            # Lee la imagen y sus dimensiones
+            img = cv2.imread(image_path)
+            if img is None:
+                print(f"No se pudo abrir la imagen: {image_path}")
+                continue
+
+            img_height, img_width = img.shape[:2]
+            num_objects = int(parts[1])
+
+            # Verifica cada caja delimitadora en la imagen
+            for i in range(num_objects):
+                x = int(parts[2 + i * 4])
+                y = int(parts[3 + i * 4])
+                width = int(parts[4 + i * 4])
+                height = int(parts[5 + i * 4])
+
+                # Revisa si las coordenadas están fuera de los límites
+                if x < 0 or y < 0 or x + width > img_width or y + height > img_height:
+                    print(f"Coordenadas fuera de límites en {image_path}: ({x}, {y}, {width}, {height})")
+def procXML():
+    # Read Pascal VOC and write data
+    base_path = pathlib.Path("formatXMLPlate")
+    img_src = base_path / "images"
+    ann_src = base_path / "annotations"
+    neg_src = pathlib.Path("negatives")
+    print(img_src.exists())
+    print(img_src)
+    print(ann_src.exists())
+    print(ann_src)
+    print(neg_src.exists())
+    print(neg_src)
+
+    negative = []
+    positive = []
+    for xmlfile in ann_src.glob("*.xml"):
+        # load xml
+        ann = read_voc_xml(str(xmlfile))
+        if ann['objects'][0]['name'] == 'dog':
+            # negative sample (dog)
+            negative.append(str(img_src / ann['filename']))
+        else:
+            # positive sample (cats)
+            bbox = []
+            for obj in ann['objects']:
+                x = obj['xmin']
+                y = obj['ymin']
+                w = obj['xmax'] - obj['xmin']
+                h = obj['ymax'] - obj['ymin']
+                bbox.append(f"{x} {y} {w} {h}")
+            line = f"{str(img_src / ann['filename'])} {len(bbox)} {' '.join(bbox)}"
+            positive.append(line)
+    for file in neg_src.glob("*.jpg"):
+            negative.append(str(neg_src / file.name))
+
+
+    # write the output to `negative.dat` and `postiive.dat`
+    with open("negative.dat", "w") as fp:
+        fp.write("\n".join(negative))
+
+    with open("positive.dat", "w") as fp:
+        fp.write("\n".join(positive))
+
 
 if __name__ == "__main__":
-    # # Reemplaza con la ruta de tu archivo de anotaciones
-    # annotations_file = "formatXMLPlate/positive.dat"
-    #
-    # # Verifica cada línea en el archivo de anotaciones
-    # with open(annotations_file, "r") as file:
-    #     lines = file.readlines()
-    #     for line in lines:
-    #         parts = line.strip().split()
-    #         image_path = parts[0]  # Ruta de la imagen
-    #         image_path = "formatXMLPlate/"+image_path
-    #         if not os.path.exists(image_path):
-    #             print(f"Imagen no encontrada: {image_path}")
-    #             continue
-    #
-    #         # Lee la imagen y sus dimensiones
-    #         img = cv2.imread(image_path)
-    #         if img is None:
-    #             print(f"No se pudo abrir la imagen: {image_path}")
-    #             continue
-    #
-    #         img_height, img_width = img.shape[:2]
-    #         num_objects = int(parts[1])
-    #
-    #         # Verifica cada caja delimitadora en la imagen
-    #         for i in range(num_objects):
-    #             x = int(parts[2 + i * 4])
-    #             y = int(parts[3 + i * 4])
-    #             width = int(parts[4 + i * 4])
-    #             height = int(parts[5 + i * 4])
-    #
-    #             # Revisa si las coordenadas están fuera de los límites
-    #             if x < 0 or y < 0 or x + width > img_width or y + height > img_height:
-    #                 print(f"Coordenadas fuera de límites en {image_path}: ({x}, {y}, {width}, {height})")
-    # Read Pascal VOC and write data
-    # base_path = pathlib.Path("formatXMLPlate")
-    # img_src = base_path / "images"
-    # ann_src = base_path / "annotations"
-    # neg_src = pathlib.Path("negatives")
-    # print(img_src.exists())
-    # print(img_src)
-    # print(ann_src.exists())
-    # print(ann_src)
-    # print(neg_src.exists())
-    # print(neg_src)
-    #
-    # negative = []
-    # positive = []
-    # for xmlfile in ann_src.glob("*.xml"):
-    #     # load xml
-    #     ann = read_voc_xml(str(xmlfile))
-    #     if ann['objects'][0]['name'] == 'dog':
-    #         # negative sample (dog)
-    #         negative.append(str(img_src / ann['filename']))
-    #     else:
-    #         # positive sample (cats)
-    #         bbox = []
-    #         for obj in ann['objects']:
-    #             x = obj['xmin']
-    #             y = obj['ymin']
-    #             w = obj['xmax'] - obj['xmin']
-    #             h = obj['ymax'] - obj['ymin']
-    #             bbox.append(f"{x} {y} {w} {h}")
-    #         line = f"{str(img_src / ann['filename'])} {len(bbox)} {' '.join(bbox)}"
-    #         positive.append(line)
-    # for file in neg_src.glob("*.jpg"):
-    #         negative.append(str(neg_src / file.name))
-    #
-    #
-    # # write the output to `negative.dat` and `postiive.dat`
-    # with open("negative.dat", "w") as fp:
-    #     fp.write("\n".join(negative))
-    #
-    # with open("positive.dat", "w") as fp:
-    #     fp.write("\n".join(positive))
-    # # camera = cv.VideoCapture(0)
-    # # if not camera.isOpened():
-    # #     print("error camara no cargada")
-    # #     exit()
-    # # while True:
-    # #     ret, frame = camera.read()
-    # #     if not ret:
-    # #         print("error no se puede obtener imagen")
-    # #         exit()
-    # # cv.imshow("Ventana", frame)
-    # # Se crea el objeto que representa la fuente de video
+
+
+    # camera = cv.VideoCapture(0)
+    # if not camera.isOpened():
+    #     print("error camara no cargada")
+    #     exit()
+    # while True:
+    #     ret, frame = camera.read()
+    #     if not ret:
+    #         print("error no se puede obtener imagen")
+    #         exit()
+    # cv.imshow("Ventana", frame)
+    # Se crea el objeto que representa la fuente de video
     #
     # camara = cv.VideoCapture(0)
     #
@@ -158,26 +161,41 @@ if __name__ == "__main__":
     model2 = 'platedetc/haarcascade_licence_plate_rus_16stages.xml'
     model3 = 'platedetc/haarcascade_russian_plate_number.xml'
 
-    classifier3 = cv2.CascadeClassifier(model3)
+    classifier = cv2.CascadeClassifier(model)
     classifier2 = cv2.CascadeClassifier(model2)
+    classifier3 = cv2.CascadeClassifier(model3)
 
     img = cv2.imread(image)
     img = cv2.resize(img, (1920, 1080), interpolation=cv2.INTER_AREA)
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Users\user\Desktop\TesseractOCR\tesseract.exe'
 
     # Convert the image to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Perform object detection
-    objects = classifier2.detectMultiScale(gray,
+    objects = classifier.detectMultiScale(gray,
                                            scaleFactor=1.1, minNeighbors=5,
                                            minSize=(30, 30))
-    numbers = classifier3.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    plates = classifier3.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
     # Draw rectangles around detected objects
     for (x, y, w, h) in objects:
         cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+    for (x, y, w, h) in plates:
+        # Extraer la región de la matrícula
         plate_region = gray[y:y + h, x:x + w]
 
+        # Aplicar umbralización (thresholding) para mejorar la precisión de OCR
+        _, plate_region = cv2.threshold(plate_region, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # Leer el texto de la región de la matrícula usando Tesseract OCR
+        plate_text = pytesseract.image_to_string(plate_region, config='--psm 8')  # --psm 8: Single word
+
+        # Mostrar el texto detectado
+        print("Texto detectado en la matrícula:", plate_text)
+
+        # Dibujar un rectángulo alrededor de la matrícula detectada
+        cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
     # Display the result
     cv2.imshow('Object Detection', img)
