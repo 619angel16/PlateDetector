@@ -6,6 +6,7 @@ import os
 import xml.etree.ElementTree as ET
 import pytesseract
 
+
 def read_voc_xml(xmlfile: str) -> dict:
     """read the Pascal VOC XML and return (filename, object name, bounding box)
     where bounding box is a vector of (xmin, ymin, xmax, ymax). The pixel
@@ -28,6 +29,7 @@ def read_voc_xml(xmlfile: str) -> dict:
 
     return boxes
 
+
 def verification():
     # Ruta archivo de anotaciones
     annotations_file = "formatXMLPlate/positive.dat"
@@ -38,7 +40,7 @@ def verification():
         for line in lines:
             parts = line.strip().split()
             image_path = parts[0]  # Ruta de la imagen
-            image_path = "formatXMLPlate/"+image_path
+            image_path = "formatXMLPlate/" + image_path
             if not os.path.exists(image_path):
                 print(f"Imagen no encontrada: {image_path}")
                 continue
@@ -62,6 +64,8 @@ def verification():
                 # Revisa si las coordenadas están fuera de los límites
                 if x < 0 or y < 0 or x + width > img_width or y + height > img_height:
                     print(f"Coordenadas fuera de límites en {image_path}: ({x}, {y}, {width}, {height})")
+
+
 def procXML():
     # Read Pascal VOC and write data
     base_path = pathlib.Path("formatXMLPlate")
@@ -95,8 +99,7 @@ def procXML():
             line = f"{str(img_src / ann['filename'])} {len(bbox)} {' '.join(bbox)}"
             positive.append(line)
     for file in neg_src.glob("*.jpg"):
-            negative.append(str(neg_src / file.name))
-
+        negative.append(str(neg_src / file.name))
 
     # write the output to `negative.dat` and `postiive.dat`
     with open("negative.dat", "w") as fp:
@@ -107,8 +110,7 @@ def procXML():
 
 
 if __name__ == "__main__":
-
-
+    #Modulo para captura por cámara WIP
     # camera = cv.VideoCapture(0)
     # if not camera.isOpened():
     #     print("error camara no cargada")
@@ -167,6 +169,7 @@ if __name__ == "__main__":
 
     img = cv2.imread(image)
     img = cv2.resize(img, (1920, 1080), interpolation=cv2.INTER_AREA)
+    # Start pytesseract with the tesseract.exe route
     pytesseract.pytesseract.tesseract_cmd = r'C:\Users\user\Desktop\TesseractOCR\tesseract.exe'
 
     # Convert the image to grayscale
@@ -174,8 +177,8 @@ if __name__ == "__main__":
 
     # Perform object detection
     objects = classifier.detectMultiScale(gray,
-                                           scaleFactor=1.1, minNeighbors=5,
-                                           minSize=(30, 30))
+                                          scaleFactor=1.1, minNeighbors=5,
+                                          minSize=(30, 30))
     plates = classifier3.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
     # Draw rectangles around detected objects
